@@ -198,12 +198,12 @@ class EnvironmentManager:
             ok = self.create(clear=clear)
             if not ok:
                 raise RuntimeError(f"Failed to create virtual environment: {self.venv_path}")
-        # 如果 pip 不可用，则触发引导安装而不是直接失败
+        # Trigger bootstrap install if pip is unavailable instead of failing immediately
         if not self._is_pip_available():
             self._register_pip_bootstrap_hook_once()
             options = Options(env_dir=str(self.venv_path), scm_ignore_files=frozenset(["git"]))
             run_after_install(options, self.venv_path)
-            # 引导后再次检查
+            # Check again after bootstrap
             if not self._is_pip_available():
                 raise RuntimeError("pip is unavailable after bootstrap")
 
@@ -257,10 +257,10 @@ class EnvironmentManager:
         if not self.exists():
             raise RuntimeError(f"Virtual environment does not exist: {self.venv_path}")
         args = list(args or [])
-        # 仅在安装时启用进度条选项，卸载不支持该参数
+        # Only add progress bar option for pip install
         subcommand = str(args[0]) if args else ""
         if stream_output and subcommand == "install" and not any(str(a).startswith("--progress-bar") for a in args):
-            # pip 支持的选项: auto/on/off/raw；使用 on 强制显示进度
+            # pip supported options: auto/on/off/raw; use on to force progress display
             args = args + ["--progress-bar=on"]
         cmd = [str(self.python_executable), "-m", "pip"] + args
         env = self.activate()
@@ -305,8 +305,6 @@ class EnvironmentManager:
         except Exception:
             return False
 
-    # ====== 私有辅助：pip 引导钩子（禁止 ensurepip） ======
-
     _pip_hook_registered: bool = False
 
     @staticmethod
@@ -322,8 +320,8 @@ class EnvironmentManager:
         """
         if platform.system() == "Windows":
             return home_dir / "Scripts" / "python.exe"
-        # 优先 python3
-        py3 = home_dir / "bin" / "python"
+        # Prefer python3, fallback to python2
+        py3 = home_dir / "bin" / "python3"
         return py3 if py3.exists() else (home_dir / "bin" / "python")
 
     def _register_pip_bootstrap_hook_once(self) -> None:
@@ -344,7 +342,8 @@ class EnvironmentManager:
                 logger.error("pip install skipped: environment python not found: %s", os.fsdecode(py))
                 return
 
-            # 使用 get-pip.py 引导（严格禁止 ensurepip），支持备用 URL 和重试
+            # Use get-pip.py to bootstrap pip (strictly disable ensurepip),
+            # with fallback to upstream mirrors if local cache is not available.
             def _download_get_pip(to_path: Path) -> bool:
                 """Download or copy get-pip.py into *to_path*."""
                 # 1. Try local cache under GLOBAL_VENV_DIR_ENV

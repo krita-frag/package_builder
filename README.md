@@ -17,6 +17,17 @@ No separate installation is required in this repository.
 - Run with Python: `python -m package_builder <command>`
 - Run with the embedded runner (Windows): `embedded_python.exe module package_builder <command>`
 
+### How to obtain embedded_python.exe
+
+- `embedded_python.exe` is produced from the embedded-Python runner template:  
+  <https://github.com/krita-frag/embedded-python-template>
+- Build steps (Windows):
+  - Install `cookiecutter`, Zig 0.15+, and Visual Studio 2022 C++ build tools (MSBuild).
+  - Run: `cookiecutter https://github.com/krita-frag/embedded-python-template.git`
+  - Enter the generated project folder and run: `zig build` (or build only the app: `zig build -Dbuild_step=app`)
+  - Find `embedded_python.exe` inside the generated project's `dist\` folder
+  - Place the executable next to this project (or add it to PATH) and invoke it as: `embedded_python.exe module package_builder <command>`
+
 Prerequisites (when using the Rust backend):
 
 - Python 3.11 (tested) or newer
@@ -55,7 +66,7 @@ Minimal `pypackage.toml`:
 [project]
 name = "core"
 version = "0.1.0"
-description = "Core module for Farm (Rust+Python via pyo3)"
+description = "Core module (Rust+Python via pyo3)"
 license = "MIT"
 readme = "README.md"
 authors = ["Example Dev <dev@example.com>"]
@@ -127,3 +138,4 @@ Notes:
 ## References
 
 - [microvenv](https://github.com/brettcannon/microvenv) – Lightweight virtual environment implementation used internally for fast, isolated Python runs.
+- [Embedded Python Template](https://github.com/krita-frag/embedded-python-template) – Template for generating `embedded_python.exe` (Zig build, embedded CPython).

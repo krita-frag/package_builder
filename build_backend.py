@@ -255,24 +255,24 @@ def _matches_excludes(rel_path: str, patterns: List[str]) -> bool:
     ppath = PurePosixPath(rel)
     for pat in patterns or []:
         p = pat.replace("\\", "/")
-        # 目录前缀模式：prefix/**
+        # Directory prefix pattern: prefix/**
         if p.endswith("/**"):
             prefix = p[:-3]
             if rel == prefix or rel.startswith(prefix + "/"):
                 return True
-        # 使用 Path.match 支持 ** 语义
+        # Use Path.match to support ** semantics
         try:
             if ppath.match(p):
                 return True
         except Exception:
             pass
-        # 后备：fnmatch
+        # Fallback: fnmatch
         try:
             if fnmatch.fnmatch(rel, p):
                 return True
         except Exception:
             pass
-        # 额外处理：**/*.ext 这种扩展匹配（Path.match 已覆盖，这里保守兜底）
+        # Extra handling: extension match like **/*.ext (covered by Path.match, kept as fallback)
         if p.startswith("**/*."):
             ext = p.split("**/*.", 1)[1]
             if rel.lower().endswith("." + ext.lower()):
@@ -409,7 +409,7 @@ def copy_selected_dependencies(env_manager, dest_site_packages: Path, dependenci
     sp_src = _get_venv_site_packages(env_manager.venv_path)
     selection = collect_dependency_selection(env_manager, list(dependencies.keys()))
     sp_reported = Path(selection.get("site_packages") or sp_src)
-    # 优先使用解析脚本返回的 site-packages 路径
+    # Use reported site-packages if exists, otherwise fallback to venv site-packages
     sp_src = sp_reported if sp_reported.exists() else sp_src
     sel = selection.get("selection", {})
     for dep, items in sel.items():

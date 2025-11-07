@@ -415,10 +415,5 @@ pyo3-build-config = "0.20"
             print(f"Failed to generate Rust+Python project template: {e}")
             return False
 
-    # `include` field support removed; no extra files are copied.
-
-    
-
-
 def register_backends(manager: BackendManager):
     manager.register("rust-python", RustPythonBackendPlugin)
